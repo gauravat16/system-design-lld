@@ -1,7 +1,6 @@
 package virtual_threads;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -9,29 +8,32 @@ import java.util.concurrent.*;
 public class VirtualThreadBenchmark {
 
 
-    private double performBenchMark(ExecutorService executorService, Runnable runnable, int totalCount) throws InterruptedException, ExecutionException {
+    private long performBenchMark(ExecutorService executorService, Runnable runnable, int totalCount) throws InterruptedException, ExecutionException {
+        long startTime = System.currentTimeMillis();
         System.out.println("Starting Bench");
-        double totalTime = 0;
+        long totalTime = 0;
 
-        List<Callable<Double>> callables = new ArrayList<>();
+        List<Callable<Long>> callables = new ArrayList<>();
 
         for (int i = 0; i < totalCount; i++) {
             callables.add(() -> {
-                long startTime = System.nanoTime();
+                long runStartTime = System.nanoTime();
                 runnable.run();
-                return (System.nanoTime() - startTime) / 1000000.0;
+                return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - runStartTime);
             });
         }
 
-        List<Future<Double>> futures = executorService.invokeAll(callables);
+        List<Future<Long>> futures = executorService.invokeAll(callables);
 
-        for (Future<Double> f : futures) {
+        for (Future<Long> f : futures) {
             totalTime += f.get();
         }
 
         BigDecimal bd = BigDecimal.valueOf(totalTime);
-        bd = bd.setScale(2, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+//        bd = bd.setScale(2, RoundingMode.HALF_UP);
+
+
+        return System.currentTimeMillis() - startTime;
 
     }
 
@@ -60,9 +62,9 @@ public class VirtualThreadBenchmark {
 //
 //        System.out.printf("timeInMsVirtualThreadCPU : %s\ntimeInMsNativeThreadCPU : %s\ndiff: %s", timeInMsVirtualThreadCPU, timeInMsNativeThreadCPU, timeInMsNativeThreadCPU - timeInMsVirtualThreadCPU);
 
-        double timeInMsVirtualThreadIO = virtualThreadBenchmark.performIOBench(Executors.newVirtualThreadPerTaskExecutor(), 100_00);
+        double timeInMsVirtualThreadIO = virtualThreadBenchmark.performIOBench(Executors.newVirtualThreadPerTaskExecutor(), 1000_000);
 
-        double timeInMsNativeThreadIO = virtualThreadBenchmark.performIOBench(Executors.newFixedThreadPool(10), 100_00);
+        double timeInMsNativeThreadIO = virtualThreadBenchmark.performIOBench(Executors.newFixedThreadPool(1000), 1000_000);
 
         System.out.printf("timeInMsVirtualThreadCPU : %s\ntimeInMsNativeThreadCPU : %s\ndiff : %s", timeInMsVirtualThreadIO, timeInMsNativeThreadIO, timeInMsVirtualThreadIO-timeInMsNativeThreadIO);
 
