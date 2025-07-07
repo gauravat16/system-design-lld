@@ -11,6 +11,7 @@
     <modules>
         <module>concurrency</module>
         <module>ram-queue</module>
+        <module>lld</module>
     </modules>
 
     <properties>
